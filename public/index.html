@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reserva de labs</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:620px;margin:40px auto;padding:0 20px;background:#0f1420;color:#e9eef3;}
+  h1{font-size:28px;}
+  form{display:grid;gap:10px;background:#162033;padding:18px;border-radius:12px;border:1px solid #2a3a57;}
+  label{font-size:13px;color:#9fb0c4;}
+  input{padding:9px 11px;border-radius:8px;border:1px solid #2a3a57;background:#0f1420;color:#e9eef3;font-size:15px;}
+  button{padding:10px;border:none;border-radius:8px;background:#5FD3E0;color:#07101b;font-weight:700;cursor:pointer;font-size:15px;}
+  #error{color:#F09080;font-size:14px;min-height:18px;}
+  ul{list-style:none;padding:0;}
+  li{background:#162033;border:1px solid #2a3a57;border-radius:9px;padding:11px 14px;margin:8px 0;}
+  .sala{font-weight:700;color:#7FD9A0;}
+</style>
+</head>
+<body>
+  <h1>Reserva de labs</h1>
+
+  <form id="form">
+    <label>Sala <input data-testid="sala" id="sala" placeholder="Lab 3"></label>
+    <label>Inicio <input data-testid="inicio" id="inicio" placeholder="2030-10-01T08:00"></label>
+    <label>Fin <input data-testid="fin" id="fin" placeholder="2030-10-01T10:00"></label>
+    <button data-testid="reservar" type="submit">Reservar</button>
+    <div data-testid="error" id="error"></div>
+  </form>
+
+  <h2>Reservas</h2>
+  <ul data-testid="lista" id="lista"></ul>
+
+  <script>
+    const lista = document.getElementById('lista')
+    const errorBox = document.getElementById('error')
+
+    function pintar(reservas) {
+      lista.innerHTML = reservas
+        .map((r) => `<li><span class="sala">${r.sala}</span> · ${r.inicio} → ${r.fin}</li>`)
+        .join('')
+    }
+
+    async function cargar() {
+      const res = await fetch('/reservas')
+      pintar(await res.json())
+    }
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      errorBox.textContent = ''
+      const body = {
+        sala: document.getElementById('sala').value,
+        inicio: document.getElementById('inicio').value,
+        fin: document.getElementById('fin').value,
+      }
+      const res = await fetch('/reservas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.status === 201) {
+        e.target.reset()
+        cargar()
+      } else {
+        errorBox.textContent = 'Revisá los datos: la reserva no es válida.'
+      }
+    })
+
+    cargar()
+  </script>
+</body>
+</html>
